@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.monitor.system.mapper.RecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.monitor.system.model.domain.Record">
+            <id property="recordId" column="record_id" jdbcType="BIGINT"/>
+            <result property="driverId" column="driver_id" jdbcType="BIGINT"/>
+            <result property="copilotId" column="copilot_id" jdbcType="BIGINT"/>
+            <result property="driverName" column="driver_name" jdbcType="VARCHAR"/>
+            <result property="copilotName" column="copilot_name" jdbcType="VARCHAR"/>
+            <result property="plateNumber" column="plate_number" jdbcType="VARCHAR"/>
+            <result property="behaviorId" column="behavior_id" jdbcType="BIGINT"/>
+            <result property="behaviorCode" column="behavior_code" jdbcType="TINYINT"/>
+            <result property="occurrenceTime" column="occurrence_time" jdbcType="TIMESTAMP"/>
+            <result property="discoveryTime" column="discovery_time" jdbcType="TIMESTAMP"/>
+            <result property="discoveryMethod" column="discovery_method" jdbcType="TINYINT"/>
+            <result property="description" column="description" jdbcType="VARCHAR"/>
+            <result property="evidence" column="evidence" jdbcType="VARCHAR"/>
+            <result property="severityLevel" column="severity_level" jdbcType="TINYINT"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="reporterId" column="reporter_id" jdbcType="BIGINT"/>
+            <result property="processComment" column="process_comment" jdbcType="VARCHAR"/>
+            <result property="processBy" column="process_by" jdbcType="BIGINT"/>
+            <result property="processTime" column="process_time" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        record_id,driver_id,copilot_id,driver_name,copilot_name,
+        plate_number,behavior_id,behavior_code,
+        occurrence_time,discovery_time,discovery_method,
+        description,evidence,severity_level,
+        status,reporter_id,process_comment,
+        process_by,process_time,create_time,
+        update_time,del_flag
+    </sql>
+</mapper>

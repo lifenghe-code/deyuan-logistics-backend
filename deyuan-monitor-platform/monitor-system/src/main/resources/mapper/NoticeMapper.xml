@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.monitor.system.mapper.NoticeMapper">
+
+    <resultMap id="BaseResultMap" type="com.monitor.system.model.domain.Notice">
+            <id property="noticeId" column="notice_id" jdbcType="BIGINT"/>
+            <result property="staffId" column="staff_id" jdbcType="VARCHAR"/>
+            <result property="copilotId" column="copilot_id" jdbcType="BIGINT"/>
+            <result property="plateNumber" column="plate_number" jdbcType="VARCHAR"/>
+            <result property="behaviorCode" column="behavior_code" jdbcType="TINYINT"/>
+            <result property="recordId" column="record_id" jdbcType="BIGINT"/>
+            <result property="noticeType" column="notice_type" jdbcType="TINYINT"/>
+            <result property="title" column="title" jdbcType="VARCHAR"/>
+            <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="senderId" column="sender_id" jdbcType="BIGINT"/>
+            <result property="senderType" column="sender_type" jdbcType="OTHER"/>
+            <result property="sendTime" column="send_time" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        notice_id,staff_id,copilot_id,
+        plate_number,behavior_code,record_id,
+        notice_type,title,content,
+        sender_id,sender_type,send_time,
+        status,del_flag
+    </sql>
+</mapper>

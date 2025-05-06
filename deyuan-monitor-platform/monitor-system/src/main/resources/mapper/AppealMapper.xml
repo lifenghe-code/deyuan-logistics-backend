@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.monitor.system.mapper.AppealMapper">
+
+    <resultMap id="BaseResultMap" type="com.monitor.system.model.domain.Appeal">
+            <id property="appealId" column="appeal_id" jdbcType="BIGINT"/>
+            <result property="recordId" column="record_id" jdbcType="BIGINT"/>
+            <result property="staffId" column="staff_id" jdbcType="BIGINT"/>
+            <result property="staffName" column="staff_name" jdbcType="VARCHAR"/>
+            <result property="plateNumber" column="plate_number" jdbcType="VARCHAR"/>
+            <result property="appealType" column="appeal_type" jdbcType="OTHER"/>
+            <result property="appealReason" column="appeal_reason" jdbcType="VARCHAR"/>
+            <result property="appealTime" column="appeal_time" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="evidence" column="evidence" jdbcType="VARCHAR"/>
+            <result property="processorId" column="processor_id" jdbcType="VARCHAR"/>
+            <result property="processComment" column="process_comment" jdbcType="VARCHAR"/>
+            <result property="processTime" column="process_time" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        appeal_id,record_id,staff_id,
+        staff_name,plate_number,appeal_type,
+        appeal_reason,appeal_time,status,
+        evidence,processor_id,process_comment,
+        process_time,create_time,update_time,
+        del_flag
+    </sql>
+</mapper>
