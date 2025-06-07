@@ -39,11 +39,14 @@ public class HybridRouter {
 
         // 启动令牌补充线程
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(() -> tokenBucket.refill(10),
-                0, 1000, TimeUnit.MILLISECONDS); // 每100ms补充10个令牌
+        scheduler.scheduleAtFixedRate(() -> tokenBucket.refill(100),
+                0, 1000, TimeUnit.MILLISECONDS); // 每1000ms补充100个令牌
     }
 
     public void sendData(byte[] data) {
+//        nettySender.sendDirect(data);
+//        log.info("直接通过Netty发送");
+
         if (tokenBucket.shouldUseKafka()) {
             // Kafka模式
             log.info("发送到Kafka");
@@ -51,8 +54,8 @@ public class HybridRouter {
         } else {
             // Netty模式
             if (tokenBucket.tryAcquire()) {
-
                 nettySender.sendDirect(data);
+                log.info("直接通过Netty发送");
             } else {
                 log.info("发送到Kafka");
                 sendToKafka(data);
