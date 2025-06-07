@@ -1,33 +1,36 @@
 package com.monitor.transfer.client;
 
 import com.monitor.transfer.handler.HeartbeatClientHandler;
-import com.monitor.transfer.handler.HeartbeatHandler;
 import com.monitor.transfer.handler.NettyClientHandler;
 import com.monitor.transfer.handler.ReconnectHandler;
+import com.monitor.transfer.middleware.NettySender;
 import com.monitor.transfer.protocol.CustomDecoder;
 import com.monitor.transfer.protocol.CustomEncoder;
 import com.monitor.transfer.protocol.CustomProtocol;
 import com.monitor.transfer.protocol.MessageType;
+import com.monitor.transfer.utils.SpringContextUtil;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.CharsetUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
-
+@Component
+@Slf4j
 public class NettyClient {
+
+
+
     public void connect(String hostname,int port) {
         // 处理TCP连接请求
         EventLoopGroup group = new NioEventLoopGroup();
         try {
+
             // 用于引导和绑定服务器
             Bootstrap bootstrap = new Bootstrap();
 
@@ -55,7 +58,11 @@ public class NettyClient {
 
             if (future.isSuccess()) {
                 Channel channel = future.channel();
+                NettySender nettySender = (NettySender) SpringContextUtil.getBean("nettySender");
+                nettySender.setChannel(channel);
+                nettySender.setEventLoopGroup(group);
                 System.out.println("成功连接到 " + channel.remoteAddress());
+
                 // ByteBuf buf = Unpooled.copiedBuffer("123", CharsetUtil.UTF_8);
                 // channel.writeAndFlush(buf);
                 // startConsoleThread(channel);

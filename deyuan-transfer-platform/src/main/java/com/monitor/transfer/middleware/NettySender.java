@@ -1,6 +1,9 @@
 package com.monitor.transfer.middleware;
 
+import com.monitor.transfer.client.NettyClient;
+import com.monitor.transfer.handler.HeartbeatClientHandler;
 import com.monitor.transfer.handler.NettyClientHandler;
+import com.monitor.transfer.handler.ReconnectHandler;
 import com.monitor.transfer.protocol.CustomDecoder;
 import com.monitor.transfer.protocol.CustomEncoder;
 import com.monitor.transfer.protocol.CustomProtocol;
@@ -13,17 +16,20 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldPrepender;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
+@Setter
 @Slf4j
 public class NettySender {
-    private  AtomicInteger count = new AtomicInteger(0);
+
+    private AtomicInteger count = new AtomicInteger(0);
     private String host;
     private Integer port;
-    private  Channel channel;
-    private  EventLoopGroup eventLoopGroup;
+    private Channel channel;
+    private EventLoopGroup eventLoopGroup;
 
 
     public NettySender(String nettyHost, int nettyPort) {
@@ -40,8 +46,10 @@ public class NettySender {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         ChannelPipeline pipeline = socketChannel.pipeline()
-                                .addLast(new CustomEncoder())         // 自定义协议编码器
+                                .addLast(new ReconnectHandler(new NettyClient(), 5, 10))
                                 .addLast(new CustomDecoder())         // 解码器
+                                .addLast(new CustomEncoder())         // 自定义协议编码器
+                                .addLast(new HeartbeatClientHandler())         // 自定义心跳处理器
                                 .addLast(new NettyClientHandler());
                     }
                 })
@@ -55,13 +63,13 @@ public class NettySender {
                 throw new RuntimeException(e);
             }
             if (future.isSuccess()) {
-            this.channel = future.channel();
-            System.out.println("成功连接到 " + channel.remoteAddress());
-            // ByteBuf buf = Unpooled.copiedBuffer("123", CharsetUtil.UTF_8);
-            // channel.writeAndFlush(buf);
-            // startConsoleThread(channel);
-        }
-        // 阻塞，直到 channel 关闭。
+                this.channel = future.channel();
+                log.info("成功连接到 " + channel.remoteAddress());
+                // ByteBuf buf = Unpooled.copiedBuffer("123", CharsetUtil.UTF_8);
+                // channel.writeAndFlush(buf);
+                // startConsoleThread(channel);
+            }
+            // 阻塞，直到 channel 关闭。
             try {
                 future.channel().closeFuture().sync();
             } catch (InterruptedException e) {
@@ -95,4 +103,5 @@ public class NettySender {
         channel.close().syncUninterruptibly();
         eventLoopGroup.shutdownGracefully();
     }
+
 }

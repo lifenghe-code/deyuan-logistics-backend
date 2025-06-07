@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 @ChannelHandler.Sharable
 @Slf4j
 public class NettyClientHandler extends SimpleChannelInboundHandler<CustomProtocol> {
+
     //channelActive() 会在客户端与服务器建立连接后调用。所以我们可以在这里面编写逻辑代码
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -35,9 +36,11 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<CustomProtoc
         if (type == MessageType.DATA) {
 //            String content = new String(message.getContent(), StandardCharsets.UTF_8);
             log.info("客户端收到消息，数据长度" + message.getLength());
+            // 其他类型消息传递给下一个handler
+            ImageAnalysisService.process(message.getContent());
         }
         else {
-            // 其他类型消息传递给下一个handler
+
             ctx.fireChannelRead(message);
         }
 //        else if(type==MessageType.HEARTBEAT)  {

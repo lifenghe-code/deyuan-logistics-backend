@@ -1,6 +1,5 @@
 
 package com.monitor.transfer.server;
-import com.monitor.transfer.handler.HeartbeatHandler;
 import com.monitor.transfer.handler.HeartbeatServerHandler;
 import com.monitor.transfer.handler.NettyServerHandler;
 import com.monitor.transfer.protocol.CustomDecoder;
@@ -10,8 +9,6 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.timeout.IdleStateHandler;
 
@@ -19,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 
 public class NettyServer {
-    private NettyServerHandler serverHandler = new NettyServerHandler();
+    private final NettyServerHandler serverHandler = new NettyServerHandler();
     public void start(int port){
         // 处理TCP连接请求
         EventLoopGroup bossGroup = new NioEventLoopGroup();

@@ -8,9 +8,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
 @Slf4j
 public class ReconnectHandler extends ChannelInboundHandlerAdapter {
     private NettyClient client;
@@ -23,6 +21,7 @@ public class ReconnectHandler extends ChannelInboundHandlerAdapter {
         this.maxRetries = maxRetries;
         this.delay = delay;
     }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         log.info("连接成功，重置重试计数器");
