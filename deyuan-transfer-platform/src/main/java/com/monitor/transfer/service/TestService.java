@@ -29,12 +29,11 @@ public class TestService {
 
 
 
-    @Scheduled(fixedRate = 100)
+    @Scheduled(fixedRate = 5)
     public void runContinuously() throws IOException {
         log.info("定时异步持续任务执行: " + System.currentTimeMillis());
-        byte[] bytes = ImageUtil.imageToByteArray("assets/img/spiderman.jpg");
-        String tmp = "123";
-
+        byte[] bytes = ImageUtil.imageToByteArray("assets/img/image1.png");
+        hybridRouter.sendData(bytes);
         hybridRouter.sendData(bytes);
 
     }
