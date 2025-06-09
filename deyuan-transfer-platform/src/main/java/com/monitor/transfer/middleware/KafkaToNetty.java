@@ -33,6 +33,8 @@ public class KafkaToNetty {
         props.put("group.id", "1");
         props.put("key.deserializer", StringDeserializer.class.getName());
         props.put("value.deserializer", ByteArrayDeserializer.class.getName());
+        // 设置每次poll最多拉取100条消息
+        props.put("max.poll.records", "100");  // 默认是500
         this.consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList(topic));
     }
@@ -40,7 +42,7 @@ public class KafkaToNetty {
     public void start() {
         new Thread(() -> {
             while (running) {
-                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(100));
+                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(1000));
                 for (ConsumerRecord<String, byte[]> record : records) {
                     nettySender.sendDirect(record.value());
                     log.info("拉取Kafka中的消息，通过Netty发送");
