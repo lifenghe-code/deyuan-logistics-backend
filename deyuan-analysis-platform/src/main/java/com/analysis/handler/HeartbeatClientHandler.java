@@ -1,12 +1,12 @@
 package com.analysis.handler;
 
+
 import com.analysis.protocol.CustomProtocol;
 import com.analysis.protocol.MessageType;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
-
 @ChannelHandler.Sharable
 @Slf4j
 public class HeartbeatClientHandler extends SimpleChannelInboundHandler<CustomProtocol> {
@@ -15,7 +15,7 @@ public class HeartbeatClientHandler extends SimpleChannelInboundHandler<CustomPr
             new CustomProtocol(MessageType.HEARTBEAT,HT.getBytes().length,HT.getBytes());
     @Override
     public void channelRead0(ChannelHandlerContext ctx, CustomProtocol message) throws Exception {
-        MessageType type = message.getType();
+        MessageType type = message.getMessageType();
         if (type == MessageType.HEARTBEAT) {
             log.info("接收到服务端心跳包");
             //ctx.writeAndFlush(HEARTBEAT_BUFFER);

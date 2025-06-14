@@ -1,6 +1,9 @@
 package com.monitor.transfer.handler;
 
 
+import com.monitor.transfer.constant.MapConstant;
+import com.monitor.transfer.constant.MessageConstant;
+import com.monitor.transfer.protocol.ClientType;
 import com.monitor.transfer.protocol.CustomProtocol;
 import com.monitor.transfer.protocol.MessageType;
 import io.netty.channel.ChannelHandler;
@@ -11,18 +14,27 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 @ChannelHandler.Sharable
 @Slf4j
 public class HeartbeatServerHandler extends SimpleChannelInboundHandler<CustomProtocol> {
     private static final String HT = "HEARTBEAT";
+    private static final String CLIENT_ID = "000000";
     private static final CustomProtocol HEARTBEAT_BUFFER =
-            new CustomProtocol(MessageType.HEARTBEAT,HT.getBytes().length,HT.getBytes());
+            new CustomProtocol(MessageType.HEARTBEAT, ClientType.VEHICLE,CLIENT_ID,HT.getBytes().length,HT.getBytes());
+    
+
+
     @Override
     public void channelRead0(ChannelHandlerContext ctx, CustomProtocol message) throws Exception {
-        MessageType type = message.getType();
+        MessageType type = message.getMessageType();
 
         if (type == MessageType.HEARTBEAT) {
             log.info("接收到客户端心跳包");
+            MapConstant.heartbeatMap.putIfAbsent(message.getClientId(), 0);
+            ctx.writeAndFlush(MessageConstant.HEARTBEAT_ACK);
         } else {
             // 其他类型消息传递给下一个handler
             ctx.fireChannelRead(message);
@@ -35,10 +47,28 @@ public class HeartbeatServerHandler extends SimpleChannelInboundHandler<CustomPr
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent e = (IdleStateEvent) evt;
             if (e.state() == IdleState.WRITER_IDLE) {
-                log.warn("检测到写空闲，发送心跳...");
+                log.warn("检测到写空闲");
+                String clientId = MapConstant.vehicleMap.get(ctx.channel().id().asLongText());
+                Integer count = MapConstant.heartbeatMap.get(clientId);
+                if (count >= 5) {
+                    log.warn("id为{}的客户端掉线", clientId);
+                    MapConstant.vehicleChannels.remove(ctx.channel());
+                    // 根据 channelId 清理客户端
+                    MapConstant.vehicleMap.forEach((k, v) -> {
+                        if (ctx.channel().id().asLongText().equals(v)) {
+                            MapConstant.vehicleMap.remove(k); // 使用ConcurrentHashMap的线程安全remove
+                        }
+                    });
+
+
+                }
+                MapConstant.heartbeatMap.putIfAbsent(clientId, ++count);
+                log.warn("发送心跳");
                 ctx.writeAndFlush(HEARTBEAT_BUFFER); // 强制发送心跳
             }
         }
     }
+
+
 }
 

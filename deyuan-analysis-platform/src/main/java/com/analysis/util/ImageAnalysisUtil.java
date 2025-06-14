@@ -1,16 +1,16 @@
-package com.analysis.service;
+package com.analysis.util;
 
 import com.analysis.manager.ComputeThreadPool;
 import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-public class ImageAnalysisService {
+public class ImageAnalysisUtil {
     private static  AtomicInteger count = new AtomicInteger(0);
     public static void process(Object object) throws InterruptedException {
         ComputeThreadPool.submit(()->{
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

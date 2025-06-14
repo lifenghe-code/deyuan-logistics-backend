@@ -16,7 +16,7 @@ public class HeartbeatHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         log.info(msg.toString());
-        if (msg instanceof CustomProtocol  && ((CustomProtocol) msg).getType() == MessageType.HEARTBEAT) {
+        if (msg instanceof CustomProtocol  && ((CustomProtocol) msg).getMessageType() == MessageType.HEARTBEAT) {
             log.info("接收到心跳包");
         } else {
             super.channelRead(ctx, msg);

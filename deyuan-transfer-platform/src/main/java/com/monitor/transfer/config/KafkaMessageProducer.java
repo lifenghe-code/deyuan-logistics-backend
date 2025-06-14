@@ -1,5 +1,6 @@
 package com.monitor.transfer.config;
 
+import com.monitor.transfer.protocol.CustomProtocol;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -27,36 +28,48 @@ import java.util.concurrent.TimeUnit;
  * @Date 2025/4/3 10:47 上午
  * @Author li-fh
  */
-@Component
+
 @Slf4j
 public class KafkaMessageProducer {
-    @Resource
-    private  KafkaProducer<String, byte[]> kafkaProducer;
 
-    @Value("${kafka.fallback.directory}")
-    private String fallbackDirectory;
-
-    @Value("${kafka.topic}")
-    private String topic;
-    private BufferedWriter fallbackWriter;
-    private Path fallbackFilePath;
+    private final KafkaProducer<String, byte[]> kafkaProducer;
 
 
+    private static String fallbackDirectory =  "./kafka_fallback";
 
-    @PostConstruct
-    public void init() throws IOException {
+    private String topic = "netty-traffic";
+
+    private static BufferedWriter fallbackWriter;
+    private static Path fallbackFilePath;
+
+
+
+    static {
         // 创建回退目录
         Path dirPath = Paths.get(fallbackDirectory);
         if (!Files.exists(dirPath)) {
-            Files.createDirectories(dirPath);
+            try {
+                Files.createDirectories(dirPath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         // 创建回退文件
         fallbackFilePath = dirPath.resolve("messages_" + System.currentTimeMillis() + ".log");
-        fallbackWriter = Files.newBufferedWriter(fallbackFilePath);
+        try {
+            fallbackWriter = Files.newBufferedWriter(fallbackFilePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         log.info("Initialized Kafka fallback mechanism. Messages will be stored at: {}", fallbackFilePath);
     }
+
+    public KafkaMessageProducer(KafkaProducer<String, byte[]> kafkaProducer) {
+        this.kafkaProducer = kafkaProducer;
+    }
+
     @PreDestroy
     public void cleanup() throws IOException {
         if (kafkaProducer != null) {
@@ -118,7 +131,35 @@ public class KafkaMessageProducer {
             }
     }
 
+    public void sendAsync(CustomProtocol message, Callback callback) {
+        String key = UUID.randomUUID().toString();
+        byte[] data = message.getContent();
+        ProducerRecord<String, byte[]> record = new ProducerRecord<>(topic, key, data);
 
+
+        kafkaProducer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                log.error("Kafka async send failed for key [{}], switching to fallback", key, exception);
+
+                writeToLocalDisk(topic,key, data);
+
+                // 告知外部 callback：Kafka 失败，已写入本地磁盘
+                if (callback != null) {
+                    callback.onCompletion(null, exception);
+                }
+            } else {
+                // Kafka 成功发送
+                if (callback != null) {
+                    callback.onCompletion(metadata, null);
+                }
+            }
+        });
+
+        // 即便未发送 Kafka，也通知 callback 表示已持久化
+        if (callback != null) {
+            callback.onCompletion(null, null);
+        }
+    }
     private synchronized void writeToLocalDisk(String topic,String key, byte[] data) {
         try {
             // 这里简单使用 Base64 编码字节数组，方便记录为文本

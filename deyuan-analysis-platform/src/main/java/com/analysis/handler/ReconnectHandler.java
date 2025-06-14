@@ -1,15 +1,11 @@
 package com.analysis.handler;
 
 import com.analysis.client.NettyClient;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
 @Slf4j
 public class ReconnectHandler extends ChannelInboundHandlerAdapter {
     private NettyClient client;
@@ -22,6 +18,7 @@ public class ReconnectHandler extends ChannelInboundHandlerAdapter {
         this.maxRetries = maxRetries;
         this.delay = delay;
     }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         log.info("连接成功，重置重试计数器");
@@ -29,7 +26,7 @@ public class ReconnectHandler extends ChannelInboundHandlerAdapter {
         ctx.fireChannelActive();
     }
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
+    public void channelInactive(ChannelHandlerContext ctx) throws InterruptedException {
         if (retryCount < maxRetries) {
             retryCount++;
 
@@ -37,15 +34,16 @@ public class ReconnectHandler extends ChannelInboundHandlerAdapter {
 
 
 
-            log.info("开始第 {} 次重连尝试...", retryCount);
-            try {
+                log.info("开始第 {} 次重连尝试...", retryCount);
+                try {
 
-                client.connect("127.0.0.1", 8000);
+                    client.connect("127.0.0.1", 8000);
 
-            } catch (Exception e) {
-                log.error("连接过程中异常: {}", e.toString());
-                channelInactive(ctx); // 继续重连
-            }
+                } catch (Exception e) {
+                    log.error("连接过程中异常: {}", e.toString());
+                    Thread.sleep(delay * 1000);
+                    channelInactive(ctx); // 继续重连
+                }
 
         } else {
             log.error("达到最大重试次数({})，停止重连", maxRetries);

@@ -1,9 +1,10 @@
 package com.analysis.handler;
 
 
+import com.analysis.constant.ClientConstant;
+import com.analysis.protocol.ClientType;
 import com.analysis.protocol.CustomProtocol;
 import com.analysis.protocol.MessageType;
-import com.analysis.service.ImageAnalysisService;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -14,16 +15,15 @@ import java.nio.charset.StandardCharsets;
 @ChannelHandler.Sharable
 @Slf4j
 public class NettyClientHandler extends SimpleChannelInboundHandler<CustomProtocol> {
-
     //channelActive() 会在客户端与服务器建立连接后调用。所以我们可以在这里面编写逻辑代码
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         String data = "netty 活跃";
         CustomProtocol message = new CustomProtocol();
-        message.setType(MessageType.DATA);
+        message.setMessageType(MessageType.AUTH);
+        message.setClientType(ClientType.ANALYSIS);
+        message.setClientId(ClientConstant.CLIENT_ID);
         byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
-        // byte[] bytes = ImageUtil.imageToByteArray("assets/img/spiderman.jpg");
-        // byte[] bytes = ImageUtil.imageToByteArray("assets/img/img1.png");
         message.setContent(bytes);
         message.setLength(bytes.length);
         ctx.writeAndFlush(message);
@@ -32,21 +32,25 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<CustomProtoc
     // 记录已接收的消息存储
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, CustomProtocol message) throws Exception {
-        MessageType type = message.getType();
+        MessageType type = message.getMessageType();
+        // ImageAnalysisUtil.process(message.getContent());
         if (type == MessageType.DATA) {
 //            String content = new String(message.getContent(), StandardCharsets.UTF_8);
             log.info("客户端收到消息，数据长度" + message.getLength());
-            // 其他类型消息传递给下一个handler
-            ImageAnalysisService.process(message.getContent());
+        }
+        if (type == MessageType.DATA_ACK) {
+//            String content = new String(message.getContent(), StandardCharsets.UTF_8);
+            log.info("客户端收到数据确认信息");
+        }
+
+        else if(type==MessageType.HEARTBEAT)  {
+            log.info("客户端接收到心跳检测信号");
+
         }
         else {
-
+            // 其他类型消息传递给下一个handler
             ctx.fireChannelRead(message);
         }
-//        else if(type==MessageType.HEARTBEAT)  {
-//            log.info("客户端接收到心跳检测信号");
-//
-//        }
     }
 
     @Override
@@ -55,4 +59,3 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<CustomProtoc
         ctx.close();
     }
 }
-

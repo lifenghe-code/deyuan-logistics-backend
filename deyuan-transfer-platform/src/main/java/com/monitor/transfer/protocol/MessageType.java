@@ -10,7 +10,8 @@ public enum MessageType {
     HEARTBEAT(0x01),   // 心跳消息
     AUTH(0x02),        // 认证消息
     DATA(0x03),        // 业务数据
-    ACK(0x04);         // 确认应答
+    DATA_ACK(0x04),        // 确认应答
+    HEARTBEAT_ACK(0x05);         // 确认应答
 
     private final int value;
 
@@ -18,8 +19,8 @@ public enum MessageType {
         this.value = (byte) value;
     }
 
-    public int getValue() {
-        return value;
+    public byte getValue() {
+        return (byte) value;
     }
 
     public static MessageType fromValue(byte value) {

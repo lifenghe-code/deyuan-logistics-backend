@@ -2,24 +2,29 @@ package com.monitor.transfer.protocol;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class CustomProtocol {
-    private MessageType type; // 消息类型（HEARTBEAT/DATA）
+public class CustomProtocol implements Serializable {
+    private MessageType messageType; // 消息类型（HEARTBEAT/DATA）
+    private ClientType clientType; // 客户端类型（Vehicle/AnalysisCenter）
+    private String clientId;
     private int length;
     private byte[] content;
 
-    public CustomProtocol(MessageType messageType) {
-        this.setType(messageType);
-    }
-
     public CustomProtocol(MessageType messageType, int length, byte[] bytes) {
-        this.setType(messageType);
-        this.setContent(bytes);
-        this.setLength(length);
     }
 
     public CustomProtocol() {
 
+    }
+
+    public CustomProtocol(MessageType messageType, ClientType clientType, String clientId, int length, byte[] bytes) {
+        this.messageType = messageType;
+        this.clientType = clientType;
+        this.clientId = clientId;
+        this.length = length;
+        this.content = bytes;
     }
 
 

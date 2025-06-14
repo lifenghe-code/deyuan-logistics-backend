@@ -36,12 +36,12 @@ public class NettyServer {
                         socketChannel.pipeline()
                         .addLast(new IdleStateHandler(0, 10, 0, TimeUnit.SECONDS))
                                 .addLast("frameDecoder", new LengthFieldBasedFrameDecoder(
-                                Integer.MAX_VALUE, 1, 4, 0, 0)) // 拆包（不去除 header，保留type）
+                                        // lengthFieldLength 表示用4个字节表示数据长度
+                                Integer.MAX_VALUE, 10, 4, 0, 0)) // 拆包（不去除 header，保留type）
                                 .addLast("customDecoder",new CustomDecoder())         // 解码器
                                 .addLast(new CustomEncoder())         // 自定义协议编码器
                                 .addLast(new HeartbeatServerHandler())         // 自定义心跳处理器
                                 .addLast(serverHandler); //使用共享的handler实例
-
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG,200)

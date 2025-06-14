@@ -1,5 +1,9 @@
 package com.monitor.transfer.middleware;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.monitor.transfer.constant.MapConstant;
+import com.monitor.transfer.protocol.CustomProtocol;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -21,12 +25,12 @@ public class KafkaToNetty {
 
     private String topic;
     private final KafkaConsumer<String, byte[]> consumer;
-    @Resource
-    private final NettySender nettySender;
+
+
     private volatile boolean running = true;
 
-    public KafkaToNetty(NettySender nettySender,String bootstrapServers, String topic) {
-        this.nettySender = nettySender;
+    public KafkaToNetty(String bootstrapServers, String topic) {
+
         //创建Properties对象，配置 Kafka 生产者的各种参数
         Properties props = new Properties() ;
         props.put("bootstrap.servers", bootstrapServers);
@@ -44,7 +48,12 @@ public class KafkaToNetty {
             while (running) {
                 ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(1000));
                 for (ConsumerRecord<String, byte[]> record : records) {
-                    nettySender.sendDirect(record.value());
+
+
+
+                    CustomProtocol myObj = ObjectUtil.deserialize(record.value());
+
+                    MapConstant.analysisChannels.writeAndFlush(myObj);
                     log.info("拉取Kafka中的消息，通过Netty发送");
                 }
             }

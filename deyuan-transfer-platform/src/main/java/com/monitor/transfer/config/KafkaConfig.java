@@ -9,21 +9,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import java.util.Properties;
 
-@Configuration
 public class KafkaConfig {
 
     @Value("${kafka.bootstrap-servers}")
-    private String bootstrapServers;
+    private static String bootstrapServers;
 
-
-//    @Value("${kafka.group-id}")
-//    private String groupId;
-
-    @Value("${kafka.topic}")
-    private String topic ;
-
-    @Bean(destroyMethod = "close")
-    public KafkaProducer<String, byte[]> kafkaProducer() {
+    public static KafkaProducer<String, byte[]> kafkaProducer() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());

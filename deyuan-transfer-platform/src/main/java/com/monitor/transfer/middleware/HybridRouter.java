@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.monitor.transfer.config.KafkaMessageProducer;
+import com.monitor.transfer.constant.MapConstant;
 import com.monitor.transfer.protocol.CustomProtocol;
 import com.monitor.transfer.protocol.MessageType;
 import lombok.extern.slf4j.Slf4j;
@@ -15,19 +16,18 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 public class HybridRouter {
-    private  TokenBucket tokenBucket;
-    private  NettySender nettySender;
-    private  KafkaMessageProducer kafkaMessageProducer;
+    private static TokenBucket tokenBucket;
+    private static KafkaMessageProducer kafkaMessageProducer;
     private final String kafkaTopic;
 
-    public HybridRouter(NettySender nettySender,
+    public HybridRouter(
                         KafkaMessageProducer kafkaMessageProducer,
                         String kafkaTopic,
                         int capacity,
                         int initialHighThreshold,
                         int initialLowThreshold,
                         long coolDownMs) {
-        this.nettySender = nettySender;
+
         this.kafkaMessageProducer = kafkaMessageProducer;
         this.kafkaTopic = kafkaTopic;
         this.tokenBucket = new TokenBucket(
@@ -43,9 +43,9 @@ public class HybridRouter {
                 0, 1000, TimeUnit.MILLISECONDS); // 每1000ms补充100个令牌
     }
 
-    public void sendData(byte[] data) {
-//        nettySender.sendDirect(data);
-//        log.info("直接通过Netty发送");
+    public static void sendData(byte[] data) {
+        // nettySender.sendDirect(data);
+
 
         if (tokenBucket.shouldUseKafka()) {
             // Kafka模式
@@ -54,7 +54,9 @@ public class HybridRouter {
         } else {
             // Netty模式
             if (tokenBucket.tryAcquire()) {
-                nettySender.sendDirect(data);
+                log.info(MapConstant.analysisMap.get("200000"));
+                log.info(String.valueOf(MapConstant.analysisMap.size()));
+                MapConstant.analysisChannels.writeAndFlush(data);
                 log.info("直接通过Netty发送");
             } else {
                 log.info("发送到Kafka");
@@ -62,8 +64,38 @@ public class HybridRouter {
             }
         }
     }
+    public static void sendData(CustomProtocol data) {
 
-    public void sendToKafka(byte[] data) {
+        log.info("直接通过Netty发送");
+
+        if (tokenBucket.shouldUseKafka()) {
+            // Kafka模式
+            log.info("发送到Kafka");
+            sendToKafka(data.getContent());
+        } else {
+            // Netty模式
+            if (tokenBucket.tryAcquire()) {
+                MapConstant.analysisChannels.writeAndFlush(data);
+                log.info("直接通过Netty发送");
+            } else {
+                log.info("发送到Kafka");
+                sendToKafka(data.getContent());
+            }
+        }
+    }
+    public static void sendToKafka(byte[] data) {
+
+        kafkaMessageProducer.sendAsync(data, (metadata, exception) -> {
+            if (exception != null) {
+                // Kafka 不可用时会触发这里
+                log.error("Kafka 异步发送失败，已降级到本地磁盘：" + exception.getMessage());
+            } else {
+                log.info("Kafka 异步发送成功！");
+            }
+        });
+    }
+
+    public void sendToKafka(CustomProtocol data) {
 
         kafkaMessageProducer.sendAsync(data, (metadata, exception) -> {
             if (exception != null) {

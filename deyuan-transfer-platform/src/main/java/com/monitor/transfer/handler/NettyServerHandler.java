@@ -1,38 +1,38 @@
 package com.monitor.transfer.handler;
 
+import com.monitor.transfer.constant.MapConstant;
+import com.monitor.transfer.constant.MessageConstant;
+import com.monitor.transfer.middleware.HybridRouter;
+import com.monitor.transfer.protocol.ClientType;
 import com.monitor.transfer.protocol.CustomProtocol;
 import com.monitor.transfer.protocol.MessageType;
-import com.monitor.transfer.utils.ImageUtil;
+
 import io.netty.channel.*;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.GlobalEventExecutor;
+
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Objects;
+
 import java.util.concurrent.atomic.AtomicInteger;
+
 
 @ChannelHandler.Sharable // 标识一个 channelHandler 可以被多个 channel 安全地调用。
 @Slf4j
 public class NettyServerHandler extends ChannelInboundHandlerAdapter {
-    // 维护活跃连接
-    private static final ChannelGroup activeChannels =
-            new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
+    @Resource
+    private HybridRouter hybridRouter;
+    // 维护活跃连接
     private static final AtomicInteger currentIndex = new AtomicInteger(0);
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws IOException {
         // byte[] bytes = ImageUtil.imageToByteArray("assets/img/img1.png");
         //
-        log.info("Channel激活: " + ctx.channel().id());
-        String data = "Channel激活: " + ctx.channel().id();
-        activeChannels.add(ctx.channel());
-        CustomProtocol message = new CustomProtocol();
-        message.setType(MessageType.DATA);
-        message.setContent(data.getBytes());
-        message.setLength(data.getBytes().length);
-        ctx.writeAndFlush(message);
+        log.info("Channel激活，Channel类型为: " + ctx.channel().id());
     }
 //    @Override
 //    public void channelRegistered(ChannelHandlerContext ctx) {
@@ -50,7 +50,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     // 当有入站消息时该方法就会调用
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         CustomProtocol message = (CustomProtocol)msg;
-        MessageType type = message.getType();
+        MessageType type = message.getMessageType();
 
         if(type==MessageType.DATA) {
             String content = new String(message.getContent(), StandardCharsets.UTF_8);
@@ -58,15 +58,36 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
             // ImageUtil.saveByteArrayAsImage(message.getContent(),"a.png");
             // 将接收到的消息写给发送者，而不冲刷出站消息。
             // ctx.writeAndFlush(buffer);
-            activeChannels.stream()
-                    .filter(ch -> ch != ctx.channel()) // 关键过滤条件
-                    .forEach(ch -> ch.writeAndFlush(message));
+            ctx.channel().writeAndFlush(MessageConstant.REPLY_MESSAGE);
+
+//            MapConstant.analysisChannels.stream()
+//                    .filter(ch -> ch != ctx.channel()) // 关键过滤条件
+//                    .forEach(ch -> ch.writeAndFlush(message));
+
+            HybridRouter.sendData(message);
+        }
+        else if(type==MessageType.AUTH) {
+            String content = new String(message.getContent(), StandardCharsets.UTF_8);
+
+            // ImageUtil.saveByteArrayAsImage(message.getContent(),"a.png");
+            // 将接收到的消息写给发送者，而不冲刷出站消息。
+            // ctx.writeAndFlush(buffer);
+            if(message.getClientType().getValue() == ClientType.VEHICLE.getValue()) {
+                MapConstant.vehicleChannels.add(ctx.channel());
+                MapConstant.vehicleMap.putIfAbsent(message.getClientId(), String.valueOf(ctx.channel().id()));
+            }
+            else if(message.getClientType().getValue() == ClientType.ANALYSIS.getValue()) {
+                log.info("数据分析端ChannelId为" + ctx.channel().id());
+                MapConstant.analysisChannels.add(ctx.channel());
+                MapConstant.analysisMap.putIfAbsent(message.getClientId(), String.valueOf(ctx.channel().id()));
+            }
+            log.info("车载客户端数量" + MapConstant.vehicleMap.size());
+            log.info("数据分析端数量" + MapConstant.analysisMap.size());
         }
         else {
             // 其他类型消息传递给下一个handler
             ctx.fireChannelRead(message);
         }
-
     }
 
 //    @Override
@@ -78,7 +99,12 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 //    }
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        activeChannels.remove(ctx.channel());
+        MapConstant.vehicleChannels.remove(ctx.channel());
+        MapConstant.vehicleMap.forEach((k, v) -> {
+            if (ctx.channel().id().asLongText().equals(v)) {
+                MapConstant.vehicleMap.remove(k); // 使用ConcurrentHashMap的线程安全remove
+            }
+        });
         log.info("客户端断开: {}", ctx.channel().remoteAddress());
     }
     @Override
@@ -109,7 +135,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
      */
     public void sendMessage(String channelId, Object message) {
         // 遍历所有活跃的 Channel
-        for (Channel channel : activeChannels) {
+        for (Channel channel : MapConstant.vehicleChannels) {
             if (Objects.equals(channel.id().asShortText(), channelId)){
                 if (channel.isActive()) {
                     channel.writeAndFlush(message).addListener(f -> {
@@ -126,16 +152,16 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 
     // 轮询发送消息
     public void sendMessage(Object message) {
-        if (activeChannels.isEmpty()) {
+        if (MapConstant.vehicleChannels.isEmpty()) {
             log.info("没有活跃的客户端连接");
             return;
         }
 
         // 获取当前轮询索引
-        int index = currentIndex.getAndUpdate(i -> (i + 1) % activeChannels.size());
+        int index = currentIndex.getAndUpdate(i -> (i + 1) % MapConstant.vehicleChannels.size());
 
         // 转换为数组避免并发修改问题
-        Channel[] channels = activeChannels.toArray(new Channel[0]);
+        Channel[] channels = MapConstant.vehicleChannels.toArray(new Channel[0]);
         Channel targetChannel = channels[index];
 
         if (targetChannel.isActive()) {
@@ -158,7 +184,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
      * @param message 要广播的消息
      */
     public void broadcast(Object message) {
-        activeChannels.forEach(channel -> {
+        MapConstant.vehicleChannels.forEach(channel -> {
             if (channel.isActive()) {
                 channel.writeAndFlush(message).addListener(f -> {
                     if (!f.isSuccess()) {
