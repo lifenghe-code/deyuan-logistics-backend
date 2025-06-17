@@ -1,11 +1,14 @@
 package com.monitor.transfer.middleware;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.monitor.transfer.config.DiskBackupQueue;
 import com.monitor.transfer.config.KafkaMessageProducer;
 import com.monitor.transfer.constant.MapConstant;
 import com.monitor.transfer.protocol.CustomProtocol;
@@ -16,6 +19,9 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 public class HybridRouter {
+    private static final Object LOCK = new Object();
+
+
     private static TokenBucket tokenBucket;
     private static KafkaMessageProducer kafkaMessageProducer;
     private final String kafkaTopic;
@@ -83,11 +89,19 @@ public class HybridRouter {
             }
         }
     }
+
     public static void sendToKafka(byte[] data) {
 
         kafkaMessageProducer.sendAsync(data, (metadata, exception) -> {
             if (exception != null) {
                 // Kafka 不可用时会触发这里
+                DiskBackupQueue tmp = new DiskBackupQueue(LocalDateTime.now().toString());
+                ProducerRecord<byte[], byte[]> record = new ProducerRecord<>("netty-traffic", LocalDateTime.now().toString().getBytes(), data);
+                try {
+                    tmp.add(record);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 log.error("Kafka 异步发送失败，已降级到本地磁盘：" + exception.getMessage());
             } else {
                 log.info("Kafka 异步发送成功！");
@@ -95,12 +109,16 @@ public class HybridRouter {
         });
     }
 
-    public void sendToKafka(CustomProtocol data) {
 
+    public void sendToKafka(CustomProtocol data) {
         kafkaMessageProducer.sendAsync(data, (metadata, exception) -> {
             if (exception != null) {
                 // Kafka 不可用时会触发这里
-                log.error("Kafka 异步发送失败，已降级到本地磁盘：" + exception.getMessage());
+                // 这里加锁，防止多辆车的数据同一时间进行落盘
+                synchronized(LOCK){
+                    DiskBackupQueue diskBackupQueue = new DiskBackupQueue(LocalDateTime.now().toString());
+                    log.error("Kafka 异步发送失败，已降级到本地磁盘：" + exception.getMessage());
+                }
             } else {
                 log.info("Kafka 异步发送成功！");
             }
