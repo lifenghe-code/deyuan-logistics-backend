@@ -1,5 +1,6 @@
 package com.deyuan.client.utils;
 
+import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.Imaging;
 
@@ -9,33 +10,11 @@ import java.io.*;
 
 public class ImageUtil {
     public static byte[] imageToByteArray(String filePath) throws IOException {
-
-        try {
             // Read image file
-            File imageFile = new File(filePath);
-            if (!imageFile.exists()) {
-                throw new IOException("Image file does not exist: " + filePath);
-            }
-
-            BufferedImage image = Imaging.getBufferedImage(imageFile);
-            if (image == null) {
-                throw new IOException("Image could not be read or is corrupted");
-            }
-
-            // Convert BufferedImage to byte array
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            if (!ImageIO.write(image, "jpg", baos)) {  // Can change to "png" if needed
-                throw new IOException("No appropriate writer found for image format");
-            }
-            return baos.toByteArray();
-        } catch (IOException e) {
-            throw new IOException("Error processing image file: " + filePath, e);
-        } catch (ImageReadException e) {
-            throw new RuntimeException(e);
-        } finally {
-            // No need to close File object as it's not a stream
-            // ByteArrayOutputStream doesn't need to be closed
-        }
+        BufferedImage image = ImageIO.read(new File(filePath));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos); // 格式需与图片一致（如 PNG、JPG）
+        return baos.toByteArray();
     }
     public static BufferedImage byteArrayToImage(byte[] imageData) throws IOException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(imageData)) {

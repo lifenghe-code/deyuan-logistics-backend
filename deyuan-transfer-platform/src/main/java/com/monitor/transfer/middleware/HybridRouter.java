@@ -2,20 +2,17 @@ package com.monitor.transfer.middleware;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.monitor.transfer.config.DiskBackupQueue;
 import com.monitor.transfer.config.KafkaMessageProducer;
 import com.monitor.transfer.constant.MapConstant;
 import com.monitor.transfer.protocol.CustomProtocol;
-import com.monitor.transfer.protocol.MessageType;
+import com.monitor.transfer.utils.CustomProtocolSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.*;
-import org.springframework.stereotype.Component;
 
 @Slf4j
 public class HybridRouter {
@@ -70,14 +67,16 @@ public class HybridRouter {
             }
         }
     }
-    public static void sendData(CustomProtocol data) {
+    public static void sendData(CustomProtocol data) throws IOException {
 
         log.info("直接通过Netty发送");
 
         if (tokenBucket.shouldUseKafka()) {
             // Kafka模式
             log.info("发送到Kafka");
-            sendToKafka(data.getContent());
+            byte[] serialize = CustomProtocolSerializer.serialize(data);
+
+            sendToKafka(serialize);
         } else {
             // Netty模式
             if (tokenBucket.tryAcquire()) {
@@ -102,9 +101,9 @@ public class HybridRouter {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                log.error("Kafka 异步发送失败，已降级到本地磁盘：" + exception.getMessage());
+                log.error("异步发送至 Kafka 失败，已降级到本地磁盘：" + exception.getMessage());
             } else {
-                log.info("Kafka 异步发送成功！");
+                log.info("异步发送到 Kafka 成功！");
             }
         });
     }

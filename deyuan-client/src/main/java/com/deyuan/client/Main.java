@@ -1,10 +1,11 @@
 package com.deyuan.client;
-
 import com.deyuan.client.client.NettyClient;
 import com.deyuan.client.utils.ImageUtil;
-import lombok.extern.slf4j.Slf4j;
 
+import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 
 @Slf4j
 public class Main {
@@ -17,10 +18,10 @@ public class Main {
         Thread.sleep(5000);
         for (int i = 0; i < 1000; i++) {
             byte[] bytes = ImageUtil.imageToByteArray("assets/img/image1.png");
-
             // byte[] bytes = "213".getBytes();
             client.send(bytes);
-            Thread.sleep(5000);
+            Thread.sleep(50);
         }
+
     }
 }

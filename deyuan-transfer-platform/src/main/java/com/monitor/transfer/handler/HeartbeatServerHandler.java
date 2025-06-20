@@ -59,8 +59,6 @@ public class HeartbeatServerHandler extends SimpleChannelInboundHandler<CustomPr
                             MapConstant.vehicleMap.remove(k); // 使用ConcurrentHashMap的线程安全remove
                         }
                     });
-
-
                 }
                 MapConstant.heartbeatMap.putIfAbsent(clientId, ++count);
                 log.warn("发送心跳");

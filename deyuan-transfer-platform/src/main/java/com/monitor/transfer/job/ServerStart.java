@@ -3,6 +3,7 @@ package com.monitor.transfer.job;
 
 import com.monitor.transfer.config.KafkaMessageProducer;
 import com.monitor.transfer.middleware.HybridRouter;
+import com.monitor.transfer.middleware.KafkaToNetty;
 import com.monitor.transfer.server.NettyServer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -41,10 +42,13 @@ public class ServerStart {
         // props.put(ProducerConfig.ACKS_CONFIG, "1");
         props.put(ProducerConfig.RETRIES_CONFIG, 3);
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true"); // 启用幂等性
+
         KafkaProducer<String, byte[]> kafkaProducer = new KafkaProducer<>(props);
 
         KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaProducer);
         HybridRouter hybridRouter = new HybridRouter(kafkaMessageProducer,topic,capacity,highThreshold,lowThreshold,coolDownPeriodMs);
+        KafkaToNetty kafkaToNetty = new KafkaToNetty(bootstrapServers,topic);
+        kafkaToNetty.start();
         NettyServer nettyServer = new NettyServer();
         nettyServer.start(8000);
         // 本地加载数据，模拟接口获取数据

@@ -19,7 +19,7 @@ public class NettyServer {
     private final NettyServerHandler serverHandler = new NettyServerHandler();
     public void start(int port){
         // 处理TCP连接请求
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         // 处理I/O事件
         EventLoopGroup workGroup = new NioEventLoopGroup();
         try {

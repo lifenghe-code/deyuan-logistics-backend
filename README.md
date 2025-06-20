@@ -1,7 +1,7 @@
 Minio启动命令
 
 ```cmd
- .\minio.exe server D:\MinIO\Data --console-address ":9000" --address ":9090"
+.\minio.exe server D:\MinIO\Data --console-address ":9000" --address ":9090"
 ```
 
 Kafka启动命令（首先启动zookeeper）

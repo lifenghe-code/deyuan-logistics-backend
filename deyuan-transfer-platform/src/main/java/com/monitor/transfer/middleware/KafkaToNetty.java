@@ -1,19 +1,16 @@
 package com.monitor.transfer.middleware;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
-import com.monitor.transfer.constant.MapConstant;
 import com.monitor.transfer.protocol.CustomProtocol;
+import com.monitor.transfer.utils.CustomProtocolSerializer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
@@ -38,7 +35,8 @@ public class KafkaToNetty {
         props.put("key.deserializer", StringDeserializer.class.getName());
         props.put("value.deserializer", ByteArrayDeserializer.class.getName());
         // 设置每次poll最多拉取100条消息
-        props.put("max.poll.records", "100");  // 默认是500
+        props.put("max.poll.records", "10");  // 默认是500
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         this.consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList(topic));
     }
@@ -48,12 +46,14 @@ public class KafkaToNetty {
             while (running) {
                 ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(1000));
                 for (ConsumerRecord<String, byte[]> record : records) {
+                    log.info("拉取Kafka中的消息，通过Netty发送");
+                    try {
+                        CustomProtocol deserialize = CustomProtocolSerializer.deserialize(record.value());
+                    } catch (IOException | ClassNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
 
-
-
-                    CustomProtocol myObj = ObjectUtil.deserialize(record.value());
-
-                    MapConstant.analysisChannels.writeAndFlush(myObj);
+//                    MapConstant.analysisChannels.writeAndFlush(myObj);
                     log.info("拉取Kafka中的消息，通过Netty发送");
                 }
             }
