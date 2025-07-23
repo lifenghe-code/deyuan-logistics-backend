@@ -3,6 +3,7 @@ package com.monitor.transfer.protocol;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @Data
 public class CustomProtocol implements Serializable {
@@ -12,6 +13,7 @@ public class CustomProtocol implements Serializable {
     private String clientId;
     private int length;
     private byte[] content;
+    private Date sendTime;
 
     public CustomProtocol(MessageType messageType, int length, byte[] bytes) {
     }
