@@ -67,7 +67,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
             HybridRouter.sendData(message);
         }
         else if(type==MessageType.AUTH) {
-            String content = new String(message.getContent(), StandardCharsets.UTF_8);
 
             // ImageUtil.saveByteArrayAsImage(message.getContent(),"a.png");
             // 将接收到的消息写给发送者，而不冲刷出站消息。
