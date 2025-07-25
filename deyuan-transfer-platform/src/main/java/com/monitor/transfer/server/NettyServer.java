@@ -38,7 +38,7 @@ public class NettyServer {
                         .addLast(new IdleStateHandler(0, 10, 0, TimeUnit.SECONDS))
                                 .addLast("frameDecoder", new LengthFieldBasedFrameDecoder(
                                         // lengthFieldLength 表示用4个字节表示数据长度
-                                Integer.MAX_VALUE, 10, 4, 0, 0)) // 拆包（不去除 header，保留type）
+                                Integer.MAX_VALUE, 18, 4, 0, 0)) // 拆包（不去除 header，保留type）
                                 .addLast("customDecoder",new CustomDecoder())         // 解码器
                                 .addLast(new CustomEncoder())         // 自定义协议编码器
                                 .addLast(new HeartbeatServerHandler())         // 自定义心跳处理器
