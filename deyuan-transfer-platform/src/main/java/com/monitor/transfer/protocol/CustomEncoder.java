@@ -22,6 +22,7 @@ public class CustomEncoder extends MessageToByteEncoder<CustomProtocol> {
             // Write message fields
             out.writeByte(msg.getMessageType().getValue());
             out.writeByte(msg.getClientType().getValue());
+            out.writeLong(msg.getSendTime());
 
             // Write client ID (with length prefix)
             byte[] clientIdBytes = msg.getClientId().getBytes(StandardCharsets.UTF_8);

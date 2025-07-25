@@ -33,7 +33,11 @@ public class HeartbeatServerHandler extends SimpleChannelInboundHandler<CustomPr
 
         if (type == MessageType.HEARTBEAT) {
             log.info("接收到客户端心跳包");
-            MapConstant.heartbeatMap.putIfAbsent(message.getClientId(), 0);
+            String clientId = MapConstant.vehicleMap.get(ctx.channel().id().asLongText());
+            if(MapConstant.heartbeatMap.containsKey(clientId)){
+                MapConstant.heartbeatMap.putIfAbsent(message.getClientId(), 0);
+            }
+
             ctx.writeAndFlush(MessageConstant.HEARTBEAT_ACK);
         } else {
             // 其他类型消息传递给下一个handler
@@ -48,8 +52,21 @@ public class HeartbeatServerHandler extends SimpleChannelInboundHandler<CustomPr
             IdleStateEvent e = (IdleStateEvent) evt;
             if (e.state() == IdleState.WRITER_IDLE) {
                 log.warn("检测到写空闲");
-                String clientId = MapConstant.vehicleMap.get(ctx.channel().id().asLongText());
-                Integer count = MapConstant.heartbeatMap.get(clientId);
+                log.info(String.valueOf(MapConstant.vehicleMap));
+                log.info(ctx.channel().id().asShortText());
+                String clientId = MapConstant.vehicleMap.getKey(ctx.channel().id().asShortText());
+                Integer count = 0;
+                if(MapConstant.heartbeatMap.containsKey(clientId)){
+                    count = MapConstant.heartbeatMap.get(clientId);
+                }
+                else{
+                    count = 1;
+                    MapConstant.heartbeatMap.putIfAbsent(clientId, count);
+                    log.warn("发送心跳");
+                    ctx.writeAndFlush(HEARTBEAT_BUFFER); // 强制发送心跳
+                    return;
+                }
+
                 if (count >= 5) {
                     log.warn("id为{}的客户端掉线", clientId);
                     MapConstant.vehicleChannels.remove(ctx.channel());
@@ -60,7 +77,10 @@ public class HeartbeatServerHandler extends SimpleChannelInboundHandler<CustomPr
                         }
                     });
                 }
-                MapConstant.heartbeatMap.putIfAbsent(clientId, ++count);
+                else{
+                    MapConstant.heartbeatMap.putIfAbsent(clientId, ++count);
+                }
+
                 log.warn("发送心跳");
                 ctx.writeAndFlush(HEARTBEAT_BUFFER); // 强制发送心跳
             }

@@ -79,6 +79,18 @@
       <version>1.0-alpha2</version>
       <scope>compile</scope>
     </dependency>
+    <!--    BidiMap-->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>4.5.0-M2</version>
+    </dependency>
+    <!-- Spring Cloud Alibaba Nacos Discovery -->
+    <dependency>
+      <groupId>com.alibaba.cloud</groupId>
+      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+      <version>2022.0.0.0</version>
+    </dependency>
       <dependency>
           <groupId>junit</groupId>
           <artifactId>junit</artifactId>

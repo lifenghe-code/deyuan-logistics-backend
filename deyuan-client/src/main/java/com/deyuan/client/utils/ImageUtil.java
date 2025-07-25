@@ -1,20 +1,24 @@
 package com.deyuan.client.utils;
-
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.imaging.ImageReadException;
-import org.apache.commons.imaging.Imaging;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 
 public class ImageUtil {
     public static byte[] imageToByteArray(String filePath) throws IOException {
+        ClassLoader classLoader = ImageUtil.class.getClassLoader();
+
             // Read image file
-        BufferedImage image = ImageIO.read(new File(filePath));
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", baos); // 格式需与图片一致（如 PNG、JPG）
-        return baos.toByteArray();
+        try (InputStream inputStream = classLoader.getResourceAsStream(filePath)) {
+            if (inputStream == null) {
+                throw new FileNotFoundException("资源未找到: " + filePath);
+            }
+
+            // 读取图片并转换为字节数组
+            BufferedImage image = ImageIO.read(inputStream);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos);
+            return baos.toByteArray();
+        }
     }
     public static BufferedImage byteArrayToImage(byte[] imageData) throws IOException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(imageData)) {

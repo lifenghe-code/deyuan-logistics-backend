@@ -28,6 +28,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     private HybridRouter hybridRouter;
     // 维护活跃连接
     private static final AtomicInteger currentIndex = new AtomicInteger(0);
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws IOException {
         // byte[] bytes = ImageUtil.imageToByteArray("assets/img/img1.png");
@@ -51,7 +52,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         CustomProtocol message = (CustomProtocol)msg;
         MessageType type = message.getMessageType();
-
         if(type==MessageType.DATA) {
             String content = new String(message.getContent(), StandardCharsets.UTF_8);
             log.info("服务器收到消息，数据长度" + message.getLength());
@@ -73,13 +73,15 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
             // 将接收到的消息写给发送者，而不冲刷出站消息。
             // ctx.writeAndFlush(buffer);
             if(message.getClientType().getValue() == ClientType.VEHICLE.getValue()) {
+                log.info("车载端ChannelId为" + ctx.channel().id().asShortText());
                 MapConstant.vehicleChannels.add(ctx.channel());
-                MapConstant.vehicleMap.putIfAbsent(message.getClientId(), String.valueOf(ctx.channel().id()));
+
+                MapConstant.vehicleMap.putIfAbsent(message.getClientId(), String.valueOf(ctx.channel().id().asShortText()));
             }
             else if(message.getClientType().getValue() == ClientType.ANALYSIS.getValue()) {
                 log.info("数据分析端ChannelId为" + ctx.channel().id());
                 MapConstant.analysisChannels.add(ctx.channel());
-                MapConstant.analysisMap.putIfAbsent(message.getClientId(), String.valueOf(ctx.channel().id()));
+                MapConstant.analysisMap.putIfAbsent(message.getClientId(), String.valueOf(ctx.channel().id().asShortText()));
             }
             log.info("车载客户端数量" + MapConstant.vehicleMap.size());
             log.info("数据分析端数量" + MapConstant.analysisMap.size());
@@ -100,13 +102,11 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         MapConstant.vehicleChannels.remove(ctx.channel());
-        MapConstant.vehicleMap.forEach((k, v) -> {
-            if (ctx.channel().id().asLongText().equals(v)) {
-                MapConstant.vehicleMap.remove(k); // 使用ConcurrentHashMap的线程安全remove
-            }
-        });
+        MapConstant.vehicleMap.removeValue(ctx.channel().id().asShortText());
+        log.info(MapConstant.vehicleMap.toString());
         log.info("客户端断开: {}", ctx.channel().remoteAddress());
     }
+
     @Override
     // 在读操作时处理异常
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

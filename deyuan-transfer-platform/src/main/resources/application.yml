@@ -36,10 +36,6 @@ spring:
 #    org.springframework: warn
 #  config: classpath:logback.xml
 
-
-
-
-
 knife4j:
   enable: true
   openapi:
@@ -97,3 +93,7 @@ management:
       show-details: ALWAYS
     logfile:
       external-file: ./logs/sys-console.log
+# application.yml
+logging:
+  level:
+    root: INFO  # 根日志级别

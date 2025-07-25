@@ -21,8 +21,8 @@ import static org.apache.kafka.common.quota.ClientQuotaEntity.CLIENT_ID;
 @Slf4j
 public class NetworkEvaluateHandler extends SimpleChannelInboundHandler<CustomProtocol> {
     private static final ReentrantLock lock = new ReentrantLock();
+    private static final String NE = "NETWORK_EVALUATE";
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -33,20 +33,27 @@ public class NetworkEvaluateHandler extends SimpleChannelInboundHandler<CustomPr
     @Override
     public void channelRead0(ChannelHandlerContext ctx, CustomProtocol message) throws Exception {
             MessageType type = message.getMessageType();
-            if(!type.equals(MessageType.NETWORK_EVALUATE_ACK)){
-                return;
+            if(!type.equals(MessageType.NETWORK_EVALUATE)){
+
+                // 其他类型消息传递给下一个handler
+                ctx.fireChannelRead(message);
+
             }
-            sendNetworkEvaluate(ctx);
+            else{
+                log.info("接收到网络状况评估");
+                sendNetworkEvaluate(ctx);
+            }
+
 
     }
 
     private void sendNetworkEvaluate(ChannelHandlerContext ctx) {
-        Date now = new Date();
         CustomProtocol packet = new CustomProtocol();
+        packet.setContent(NE.getBytes());
+        packet.setLength(NE.getBytes().length);
         packet.setClientType(ClientType.VEHICLE);
         packet.setClientId(CLIENT_ID);
         packet.setMessageType(MessageType.NETWORK_EVALUATE_ACK);
-        packet.setSendTime(now);
         // 更新丢包窗口（发送心跳包，是否丢包取决于是否收到Ack）
         ctx.writeAndFlush(packet);
     }

@@ -11,7 +11,9 @@ public enum MessageType {
     AUTH(0x02),        // 认证消息
     DATA(0x03),        // 业务数据
     DATA_ACK(0x04),        // 确认应答
-    HEARTBEAT_ACK(0x05);         // 确认应答
+    HEARTBEAT_ACK(0x05),         // 确认应答
+    NETWORK_EVALUATE(0x06),         // 确认应答
+    NETWORK_EVALUATE_ACK(0x07);         // 确认应答
 
     private final int value;
 

@@ -13,6 +13,7 @@ public class Main {
         NettyClient client = new NettyClient();
         new Thread(() -> {
             client.connect("127.0.0.1", 8000);
+            // client.connect("192.168.130.1", 8000);
         }).start();
         // 等待连接成功
         Thread.sleep(5000);
@@ -20,8 +21,7 @@ public class Main {
             byte[] bytes = ImageUtil.imageToByteArray("assets/img/image1.png");
             // byte[] bytes = "213".getBytes();
             client.send(bytes);
-            Thread.sleep(50);
+            Thread.sleep(2000);
         }
-
     }
 }

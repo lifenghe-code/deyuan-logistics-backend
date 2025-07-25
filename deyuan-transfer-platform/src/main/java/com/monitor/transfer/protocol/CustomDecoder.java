@@ -28,6 +28,10 @@ public class CustomDecoder extends MessageToMessageDecoder<ByteBuf> {
             // Read client type
             protocol.setClientType(ClientType.fromValue(in.readByte()));
 
+            // Read send time
+            protocol.setSendTime(in.readLong());
+
+
             // Read client ID
             short clientIdLength = in.readShort();
             if (in.readableBytes() < clientIdLength) {

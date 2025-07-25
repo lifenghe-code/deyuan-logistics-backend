@@ -3,14 +3,19 @@ package com.deyuan.client.protocol;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.Date;
 
 @Data
 public class CustomProtocol implements Serializable {
+    private static final long serialVersionUID = 1L;
     private MessageType messageType; // 消息类型（HEARTBEAT/DATA）
     private ClientType clientType; // 客户端类型（Vehicle/AnalysisCenter）
     private String clientId;
     private int length;
     private byte[] content;
+    private Long sendTime = new Date().getTime();
 
     public CustomProtocol(MessageType messageType, int length, byte[] bytes) {
     }

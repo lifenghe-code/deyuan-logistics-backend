@@ -1,4 +1,4 @@
-package com.monitor.transfer.job;
+package com.monitor.transfer;
 
 
 import com.monitor.transfer.config.KafkaMessageProducer;
@@ -9,11 +9,10 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Properties;
 
-public class ServerStart {
+public class Main {
 
 
     private static String bootstrapServers = "127.0.0.1:9092";

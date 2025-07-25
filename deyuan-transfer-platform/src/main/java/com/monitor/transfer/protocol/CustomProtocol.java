@@ -13,8 +13,7 @@ public class CustomProtocol implements Serializable {
     private String clientId;
     private int length;
     private byte[] content;
-    private Date sendTime;
-
+    private Long sendTime = new Date().getTime();
     public CustomProtocol(MessageType messageType, int length, byte[] bytes) {
     }
 

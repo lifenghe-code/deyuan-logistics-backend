@@ -3,6 +3,7 @@ package com.deyuan.client.client;
 import com.deyuan.client.constant.ClientConstant;
 import com.deyuan.client.handler.HeartbeatClientHandler;
 import com.deyuan.client.handler.NettyClientHandler;
+import com.deyuan.client.handler.NetworkEvaluateHandler;
 import com.deyuan.client.handler.ReconnectHandler;
 
 import com.deyuan.client.protocol.*;
@@ -12,6 +13,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Date;
 
 @Slf4j
 public class NettyClient {
@@ -43,6 +46,7 @@ public class NettyClient {
                                     .addLast(new CustomDecoder())         // 解码器
                                     .addLast(new CustomEncoder())         // 自定义协议编码器
                                     .addLast(new HeartbeatClientHandler())         // 自定义心跳处理器
+                                    .addLast(new NetworkEvaluateHandler())
                                     .addLast(new NettyClientHandler());
                         }
                     })
@@ -81,6 +85,7 @@ public class NettyClient {
             message.setClientId(ClientConstant.CLIENT_ID);
             message.setContent(data);
             message.setLength(data.length);
+
             channel.writeAndFlush(message).addListener(future -> {
                 if (!future.isSuccess()) {
                     // 失败处理

@@ -6,10 +6,12 @@ import com.deyuan.client.protocol.CustomProtocol;
 import com.deyuan.client.protocol.MessageType;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelId;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 @ChannelHandler.Sharable
 @Slf4j
@@ -18,10 +20,12 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<CustomProtoc
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         String data = "netty 活跃";
+        ChannelId id = ctx.channel().id();
         CustomProtocol message = new CustomProtocol();
         message.setMessageType(MessageType.AUTH);
         message.setClientType(ClientType.VEHICLE);
         message.setClientId(ClientConstant.CLIENT_ID);
+        message.setSendTime(new Date().getTime());
         byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
         message.setContent(bytes);
         message.setLength(bytes.length);
